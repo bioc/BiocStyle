@@ -3,6 +3,7 @@ html_document2 <- function(toc = TRUE,
                            fig_width = NA,
                            fig_height = NA,
                            fig_retina = NULL,
+                           self_contained = TRUE,
                            css = NULL,
                            pandoc_args = NULL,
                            ...) {
@@ -15,6 +16,7 @@ html_document2 <- function(toc = TRUE,
                           fig_width = NA,
                           fig_height = NA,
                           fig_retina = NULL,
+                          self_contained,
                           css = NULL,
                           ...) {
   
@@ -63,6 +65,7 @@ html_document2 <- function(toc = TRUE,
     number_sections = TRUE,
     fig_width = fig_width,
     fig_height = fig_height,
+    self_contained = self_contained,
     css = css,
     ...)
   
@@ -90,6 +93,7 @@ html_document2 <- function(toc = TRUE,
   rmarkdown::output_format(
     knitr = knitr,
     pandoc = NULL,
+    clean_supporting = self_contained,
     pre_processor = pre_processor,
     post_processor = post_processor,
     base_format = rmarkdown_html_document)
@@ -102,6 +106,7 @@ html_document2 <- function(toc = TRUE,
     fig_width = fig_width,
     fig_height = fig_height,
     fig_retina = fig_retina,
+    self_contained = self_contained,
     css = css,
     ...
   )
@@ -189,6 +194,8 @@ caption_titles = function(lines) {
 }
 
 process_footnotes = function(lines) {
+  fn_label = paste0(knitr::opts_knit$get("rmarkdown.pandoc.id_prefix"), "fn")
+  
   ## match to footnotes block
   i = which(lines == '<div class="footnotes">')
   if (length(i) == 0L)
@@ -197,7 +204,7 @@ process_footnotes = function(lines) {
   j = min(j[j > i])
   
   ## extract footnotes and their ids
-  r = '<li id="fn([0-9]+)"><p>(.+)<a href="#fnref\\1">.</a></p></li>'
+  r = sprintf('<li id="%s([0-9]+)"><p>(.+)<a href="#%sref\\1">.</a></p></li>', fn_label, fn_label)
   fns = grep(r, lines[i:j], value=TRUE)
   ids = as.integer(gsub(r, '\\1', fns))
   fns = gsub(r, '\\2', fns)
@@ -211,8 +218,8 @@ process_footnotes = function(lines) {
     fn = fns[i]
     lines = sub(
       sprintf(
-        '<a href="#fn%d" class="footnoteRef" id="fnref%d"><sup>%d</sup></a>',
-        id, id, id),
+        '<a href="#%s%d" class="footnoteRef" id="%sref%d"><sup>%d</sup></a>',
+        fn_label, id, fn_label, id, id),
       sprintf(paste0(
         '<label for="sidenote-%d" class="margin-toggle sidenote-number">%d</label>',
         '<input type="checkbox" id="sidenote-%d" class="margin-toggle">',
